@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+
+    <style>
+        body {
+            font-family: "Times New Roman", Times, serif;
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+        }
+
+        .wrapper {
+            max-width: 30em;
+				margin-left: 50px;
+				padding: 1em;
+				background-color: #fff;
+        }
+
+        .Header {
+            color: #333;
+        }
+
+        .Methods {
+            justify-content: center;
+            gap: 1em;
+            margin-top: 1em;
+        }
+
+        .Methods label {
+            margin-bottom: 0;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+        }
+
+        .Methods input {
+            margin-right: 0.5em;
+        }
+
+        .DataInputGroup {
+            margin-top: 1em;
+        }
+
+        .DataInputGroup input {
+            width: 250px;
+			padding: 0.5em;
+			margin-bottom: 0.5em;
+        }
+
+        .SendButton {
+            display: block;
+			margin: 20px;
+			padding: 0.5em 1em;
+			font-weight: bold;
+			font-size: 1.2rem;
+			background-color: #de5092;
+			color: #fff;
+			border: none;
+			border-radius: 5px;
+			cursor: pointer;
+        }
+
+        #resultDiv {
+            text-align: center;
+            color: red;
+            margin-top: 1em;
+        }
+
+        .table {
+            margin-right: auto;
+			width: 100%;
+			border: 1px solid #333;
+			text-align: center;
+			margin-top: 1em;
+			border-collapse: collapse;
+        }
+
+        table td, table th {
+            border: 1px solid #333;
+			padding: 8px;
+        }
+
+        table th {
+            background-color: #ffffff;
+        }
+    </style>
+
+    <title>Document</title>
+
+    <script defer>
+        function updateVisibleInputs() {
+            const method = document.querySelector('input[name="Method"]:checked').value;
+            const pulpitInput = document.querySelector('.Pulpit');
+            const pulpitNameInput = document.querySelector('.PulpitName');
+            const facultyInput = document.querySelector('.Faculty');
+
+            pulpitInput.style.display = 'none';
+            pulpitNameInput.style.display = 'none';
+            facultyInput.style.display = 'none';
+
+            switch (method) {
+                case "POST":
+                    pulpitInput.style.display = 'block';
+                    pulpitNameInput.style.display = 'block';
+                    facultyInput.style.display = 'block';
+                    break;
+                case "PUT":
+                    pulpitInput.style.display = 'block';
+                    pulpitNameInput.style.display = 'block';
+                    facultyInput.style.display = 'block';
+                    break;
+                case "DELETE":
+                    pulpitInput.style.display = 'block';
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        async function SendRequest() {
+            const method = document.querySelector('input[name="Method"]:checked').value;
+            const pulpit = document.querySelector('.Pulpit').value;
+            const pulpitName = document.querySelector('.PulpitName').value;
+            const faculty = document.querySelector('.Faculty').value;
+            let url = `http://localhost:3000/api/teachers`;
+            const table = document.getElementById('data');
+            const data = {
+                TEACHER: pulpit,
+                TEACHER_NAME: pulpitName,
+                PULPIT: faculty
+            };
+
+
+            let resultJson;
+
+            let onlyHeadersRowLeft = table.rows.length > 1;
+            while (onlyHeadersRowLeft) {
+                table.deleteRow(1);
+                onlyHeadersRowLeft = table.rows.length > 1;
+            }
+
+            let response;
+            switch (method) {
+                case "POST":
+                    if ((!pulpit || !pulpitName || !faculty)) {
+                        alert('Please fill in all fields.');
+                        return;
+                    }
+                    try {
+                        console.log(data);
+                        response = await fetch(url, {
+                            method: method,
+                            body: JSON.stringify(data),
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        });
+
+                        if (response.status === 404 || response.status===400 || response.status===500) {
+                            const text = await response.text();
+                            document.getElementById('resultDiv').textContent = text;
+                        } else {
+                            const result = await response.json();
+                            console.log(result[0]);
+                            document.getElementById('resultDiv').textContent = "";
+                            createContentFromJson(table, result)
+                        }
+                    } catch (e) {
+                        alert("Error: " + e.message);
+                    }
+
+                    break;
+                case "GET" :
+                    response = await fetch(url, {
+                        method: method,
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    resultJson = await response.json();
+                    console.log(resultJson);
+                    document.getElementById('resultDiv').textContent = "";
+                    createTableContentFromJson(table, resultJson);
+                    break;
+                case "PUT":
+                    if ((!pulpit || !pulpitName || !faculty)) {
+                        alert('Please fill in all fields.');
+                        return;
+                    }
+                    try {
+                        response = await fetch(url, {
+                            method: method,
+                            body: JSON.stringify(data),
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        });
+
+                        if (response.status === 404 || response.status===400 || response.status===500) {
+                            const text = await response.text();
+                            document.getElementById('resultDiv').textContent = text;
+                        } else {
+                            const result = await response.json();
+                            console.log(result[0]);
+                            document.getElementById('resultDiv').textContent = "";
+                            createContentFromJson(table, result);
+                        }
+                    } catch (e) {
+                        alert("Error: " + e.message);
+                    }
+                    break;
+                case "DELETE":
+                    if ((!pulpit)) {
+                        alert('Please fill in all fields.');
+                        return;
+                    }
+                    url = url.concat(`/${pulpit}`);
+                    try {
+                        response = await fetch(url, {
+                            method: method,
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        });
+
+                        if (response.status === 404 || response.status===400 || response.status===500) {
+                            const text = await response.text();
+                            document.getElementById('resultDiv').textContent = text;
+                        } else {
+                            document.getElementById('resultDiv').textContent = "";
+                            const result = await response.json();
+                            console.log(result[0]);
+                            createContentFromJson(table, result);
+                        }
+                    } catch (e) {
+                        alert("Error: " + e.message);
+                    }
+                    break;
+
+            }
+        }
+
+        function createTableContentFromJson(table, resultJson) {
+            resultJson.forEach(element => {
+                const pulpit = element.TEACHER;
+                const pulpitName = element.TEACHER_NAME;
+                const faculty = element.PULPIT;
+
+                const tr = document.createElement('tr');
+                const pulpitCell = document.createElement('td');
+                const pulpitNameCell = document.createElement('td');
+                const facultyCell = document.createElement('td');
+
+                pulpitCell.textContent = pulpit;
+                pulpitNameCell.textContent = pulpitName;
+                facultyCell.textContent = faculty;
+
+                tr.appendChild(pulpitCell);
+                tr.appendChild(pulpitNameCell);
+                tr.appendChild(facultyCell);
+
+                table.appendChild(tr);
+            });
+        }
+
+        function createContentFromJson(table, resultJson) {
+                const pulpit = resultJson.TEACHER;
+                const pulpitName = resultJson.TEACHER_NAME;
+                const faculty = resultJson.PULPIT;
+
+                const tr = document.createElement('tr');
+                const pulpitCell = document.createElement('td');
+                const pulpitNameCell = document.createElement('td');
+                const facultyCell = document.createElement('td');
+
+                pulpitCell.textContent = pulpit;
+                pulpitNameCell.textContent = pulpitName;
+                facultyCell.textContent = faculty;
+
+                tr.appendChild(pulpitCell);
+                tr.appendChild(pulpitNameCell);
+                tr.appendChild(facultyCell);
+
+                table.appendChild(tr);
+        }
+
+    </script>
+</head>
+<body>
+
+<div class="wrapper">
+
+    <h2 class="Header">Methods</h2>
+    <div class="Methods">
+        <label onclick="updateVisibleInputs()">
+            GET
+            <input type="radio" name="Method" value="GET">
+        </label>
+        <label onclick="updateVisibleInputs()">
+            POST
+            <input type="radio" name="Method" value="POST">
+        </label>
+        <label onclick="updateVisibleInputs()">
+            PUT
+            <input type="radio" name="Method" value="PUT">
+        </label>
+        <label onclick="updateVisibleInputs()">
+            DELETE
+            <input type="radio" name="Method" value="DELETE">
+        </label>
+    </div>
+
+    <h2 class="Header">Data</h2>
+
+    <div id="resultDiv"></div>
+
+    <div id="DataInputGroup" class="DataInputGroup">
+        <input class="Pulpit" type="text" placeholder="TEACHER">
+        <input class="PulpitName" type="text" placeholder="TEACHER_NAME">
+        <input class="Faculty" type="text" placeholder="PULPIT">
+    </div>
+
+    <Button class="SendButton" onclick="SendRequest()">Send Request</Button>
+
+    <h2 class="Header">Result</h2>
+    <table id="data" class="table">
+        <tr id="header">
+            <th>TEACHER</th>
+            <th>TEACHER_NAME</th>
+            <th>PULPIT</th>
+        </tr>
+    </table>
+
+</div>
+
+
+</body>
+
+
+</html>

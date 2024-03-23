@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Title</title>
+        <style>
+            body {
+                font-family: 'Times New Roman', Times, serif;
+                margin: 0;
+                padding: 0;
+                background-color: #ffffff;
+            }
+    
+            table {
+                width: 40%;
+                border-collapse: collapse;
+                margin-top: 20px;
+                margin-bottom: 20px;
+                margin-left: 20px;
+            }
+            thead {
+                background-color: #ececec; 
+            }  
+    
+            th, td {
+                border: 1px solid #b7b7b7;
+                padding: 8px;
+                text-align: left;
+            }
+    
+            th {
+                background-color: #5858c7;
+                color: white;
+            }
+    
+            button {
+                background-color: #5858c7;
+                border: none;
+                color: white;
+                padding: 10px 20px;
+                text-align: center;
+                text-decoration: none;
+                display: inline-block;
+                font-size: 16px;
+                margin: 4px 2px;
+                cursor: pointer;
+                border-radius: 2px;
+            }
+    
+            #page-number {
+                font-size: 20px;
+                margin-left: 10px;
+                margin-right: 10px;
+                display: inline-block; /* Добавлено для выравнивания по центру в строке */
+            }
+    
+            .pagination {
+                text-align: left; /* Добавлено для выравнивания по центру */
+                margin-top: 20px;
+                margin-left: 150px;
+            }
+    
+            .pagination button {
+                display: inline-block; /* Добавлено для размещения кнопок в строке */
+                margin: 0 5px; /* Добавлено для создания отступа между кнопками */
+            }
+        </style>
+    </head>
+<script defer>
+
+    document.addEventListener("DOMContentLoaded", async() =>{
+        await getPulpits(0);
+    });
+
+    async function getPulpits(mode) {
+        const pageNumberElement = document.querySelector("#page-number");
+        const tableElement = document.querySelector("#tbody");
+
+        let pageNumber = +pageNumberElement.innerText;
+
+
+        if (!(pageNumber === 0 && mode === -1)) {
+            pageNumber += mode;
+            const data = await fetch(`http://localhost:3000/api/getPulpitsByCount/${pageNumber}`);
+            const result = await data.json();
+
+            console.log(result);
+
+            if (result.length === 0) {
+                return;
+            }
+            else {
+                tableElement.innerHTML = "";
+
+                result.forEach(x => {
+                    const {pulpit, pulpit_name, faculty, _count} = x;
+                    console.log(x);
+
+
+                    const pulpitTd = document.createElement("td");
+                    const pulpitNameTd = document.createElement("td");
+                    const facultyTd = document.createElement("td");
+                    const countTd = document.createElement("td");
+
+                    const tr = document.createElement("tr");
+
+                    pulpitTd.textContent = pulpit;
+                    pulpitNameTd.textContent = pulpit_name;
+                    facultyTd.textContent = faculty;
+                    countTd.textContent = _count.Teacher;
+
+                    tr.append(pulpitTd,pulpitNameTd,facultyTd,countTd);
+                    tableElement.append(tr);
+                });
+
+                pageNumberElement.innerText = pageNumber;
+            }
+        }
+
+    }
+</script>
+<body>
+
+<table>
+    <thead>
+    <td>PULPIT</td>
+    <td>PULPIT NAME</td>
+    <td>FACULTY</td>
+    <td>TEACHERS COUNT</td>
+    </thead>
+    <tbody id="tbody">
+
+    </tbody>
+</table>
+
+<div class="pagination">
+    <button onclick="getPulpits(-1)">Предыдущая</button>
+    <div id="page-number">0</div>
+    <button onclick="getPulpits(+1)">Следующая</button>
+</div>
+
+</body>
+
+
+</html>

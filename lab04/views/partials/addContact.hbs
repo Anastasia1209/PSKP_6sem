@@ -1,0 +1,38 @@
+<div>
+    <form method="POST" action="/add">
+        <div class="Menu">
+            <input type="text" name="name" id="name" placeholder="name">
+            <input type="number" name="number" id="number" placeholder="phone">
+        </div>
+         <div class="Menu">
+            <button id ="btAdd" type="submit" onmouseenter="ValidateNumber()">Добавить</button>
+            <button type="btCancel" onclick="{{exit}}">Отмена</button>
+        </div>
+    </form>
+</div>
+<script>
+function ValidateNumber() {
+    document.getElementById('btAdd').disabled = false;
+
+    let valide1 = false;
+    let valide2 = false;
+
+    if (document.getElementById('number').value.length === 12) {
+        valide1 = true;
+    }
+
+    let numCode = [3, 7, 5];
+    for (let i = 0; i < 3; i++) {
+        if (document.getElementById('number').value[i] == numCode[i]) {
+            valide2 = true;
+        } else {
+            valide2 = false;
+            break; 
+        }
+    }
+
+    if (!valide1 || !valide2) {
+        document.getElementById('btAdd').disabled = true;
+    }
+}
+</script>

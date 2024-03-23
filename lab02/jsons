@@ -1,0 +1,23 @@
+/api/faculties
+[
+    {
+        "FACULTY": "ИИ",
+        "FACULTY_NAME": "Искусственный интеллект"
+    }
+]
+/api/pulpits
+[
+    {"pulpit": "PULPIT", "pulpitName": "Pulpit Name", "faculty": "ИИ"}
+]
+/api/subjects
+[
+    {"subject": "SUBJECT", "subjectName": "Subject Name 2", "pulpit": "PULPIT"}
+]
+/api/auditoriums
+[
+    {"auditorium": "AUD2", "auditoriumName": "Auditorium Name 2", "auditoriumCapacity": 100, "auditoriumType": "TYPE2"}
+]
+/api/auditoriumstypes
+[
+    {"auditoriumType": "TYPE2", "auditoriumTypeName": "auditorium Type Name 2"}
+]

@@ -1,3 +1,6 @@
+create database LABNODE;
+drop database LABNODE;
+use LABNODE;
 -- DROP TABLE FACULTY
 CREATE TABLE FACULTY
   (
