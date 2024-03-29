@@ -1,182 +1,169 @@
-const express = require('express');
 const expressHandlebars = require('express-handlebars');
+const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const qs = require('qs');
-const app = express();
-const port = 3000;
 
 const handlebars = expressHandlebars.create({
 	defaultLayout: 'main', 
 	extname: 'hbs',
 	helpers: {
-		exit: `document.location='/main'`
+		exit: `document.location='/'`
 	}
 });
 
-app.engine('hbs', handlebars.engine);
-app.set("view engine", "hbs");
-app.use(express.urlencoded({ extended: true }));
+let app = express();
 
-const publicPath = path.join(__dirname, 'views');
+app.engine('hbs', handlebars.engine);
+app.set('view engine', 'hbs');
+
+const publicPath = path.join(__dirname, 'views', 'public');
 app.use(express.static(publicPath));
 
-app.get('/main', async function(req, res) {
-	fs.readFile('DB.json', 'utf8', (err, users) => {
-		if (err) {console.error(err);return;}
-		res.render("./main.hbs", {users:JSON.parse(users), clickable:false});
-	});
-});
 
-
-app.get('/add', (req, res) => {
+app.get('/add', async function(req, res) {
     fs.readFile('DB.json', 'utf8', (err, users) => {
         if (err) {
             console.error(err);
-            return res.status(500).send("Server Error");
+            return;
         }
-        try {
-            const parsedUsers = JSON.parse(users);
-            res.render("add", { users: parsedUsers, clickable: true });
-        } catch (error) {
-            console.error("Error parsing JSON:", error.message);
-            return res.status(500).send("Server Error");
-        }
+        res.render("add", { users: JSON.parse(users), clickable: true });
     });
 });
 
 app.post('/add', async function(req, res) {
     let data = '';
     let filePath = 'DB.json';
-
     req.on('data', (chunk) => {
         data += chunk;
     });
-
     req.on('end', () => {
-        let newUser = {};
         let name = qs.parse(data)['name'];
         let number = qs.parse(data)['number'];
 
-        try {
-            let DB = fs.readFileSync(filePath, 'utf8');
-            DB = JSON.parse(DB);
-            newUser.id = DB.length > 0 ? DB[DB.length - 1].id + 1 : 1;
-            newUser.name = name;
-            newUser.number = number;
-            DB.push(newUser);
+        let newUser = { "id": -1, "name": `${name}`, "number": `${number}` };
 
-            fs.writeFile(filePath, JSON.stringify(DB, null, 2), 'utf8', (err) => {
-                if (err) {
-                    console.error('Error writing to file:', err.message);
-                    return res.status(500).send("Server Error");
-                } else {
-                    console.log('Written successfully');
-                    res.writeHead(302, {
-                        'Location': '/main'
-                    });
-                    res.end();
-                }
-            });
-        } catch (error) {
-            console.error('Error reading file:', error.message);
-            return res.status(500).send("Server Error");
-        }
-    });
-});
-
-app.get('/update', async function(req, res){
-    fs.readFile('DB.json', 'utf8', (err, users) =>{
-        if (err) {console.error(err);
-        return; }
-        let data = JSON.parse(users);
-        let user = data.find((elem) => elem.id == req.query.id)
-        res.render("update.hbs", {
-            users:data,
-            iser:user,
-            clickable:true
-        });
-    });
-});
-
-app.post('/update', async function(req, res) {
-    let data = '';
-    let filePath = 'DB.json';
-
-    req.on('data', (chunk) => {
-        data += chunk;
-    });
-
-    req.on('end', () => {
         let DB;
-
-        let name = qs.parse(data)['name'];
-        let number = qs.parse(data)['number'];
-        let id = qs.parse(data)['id'];
-
         try {
             DB = fs.readFileSync(filePath, 'utf8');
             DB = JSON.parse(DB);
-
-            let newUser = { "id": id, "name": name, "number": number };
-
-            for (let i = 0; i < DB.length; i++) {
-                if (id == DB[i].id) {
-                    DB[i] = newUser;
-                    break;
-                }
-            }
-
-            fs.writeFile(filePath, JSON.stringify(DB, null, 2), 'utf8', (err) => {
-                if (err) {
-                    console.error('Error writing to file:', err.message);
-                    return res.status(500).send("Server Error");
-                } else {
-                    console.log('Written successfully.');
-                    res.writeHead(302, {
-                        'Location': '/main'
-                    });
-                    res.end();
-                }
-            });
+            newUser.id = DB[DB.length - 1].id + 1;
+            DB.push(newUser);
+            DB = JSON.stringify(DB, null, 2); 
         } catch (error) {
             console.error('Error reading file:', error.message);
-            return res.status(500).send("Server Error");
         }
+
+        fs.writeFile(filePath, DB, 'utf8', (err) => {
+            if (err) {
+                console.error('Error writing to file:', err.message);
+            } else {
+                console.log('Written successfully.');
+            }
+        });
+
+        res.writeHead(302, { 'Location': '/' });
+        res.end();
     });
 });
 
+
+app.get('/update', async function(req, res) {
+	fs.readFile('DB.json', 'utf8', (err, users) => {
+		if (err) {console.error(err);return;}
+		let data = JSON.parse(users);
+		let usr = data.find((elem)=>elem.id == req.query.id)
+		res.render("update.hbs", {
+			users:data,
+			user:usr, 
+			clickable:true
+		});
+	});
+});
+
+app.post('/update', async function(req, res) {
+	let data = '';
+	let filePath = 'DB.json';
+	req.on('data', (chunk)=>{
+		data += chunk;
+	});
+	req.on('end', ()=>{
+		let DB;
+
+		let name = qs.parse(data)['name'];
+		let number = qs.parse(data)['number'];		
+		let id = qs.parse(data)['id'];	
+		let newUser = {"id" : id, "name":`${name}`, "number":`${number}`}
+
+		try {
+			DB = fs.readFileSync(filePath, 'utf8');
+			DB = JSON.parse(DB);
+			for(let i = 0; i < DB.length; i++){
+				if(newUser.id == DB[i].id){
+					DB[i] = newUser;
+				}
+			}
+			DB = JSON.stringify(DB, null, 2);
+		} catch (error) {
+			console.error('Error reading file:', error.message);
+		}
+
+		fs.writeFile(filePath, DB, 'utf8', (err) => {
+			if (err) {
+				console.error('Error writing to file:', err.message);
+			} else {
+				console.log('Written successfully.');
+			}
+		});
+
+	})
+	res.writeHead(302, {
+		'Location': '/' 
+	});
+	res.end();
+});
 app.delete('/delete/:id', async function(req, res) {
-    let filePath = 'DB.json';
-    let id = req.params.id;
+	let data = '';
+	let filePath = 'DB.json';
 
-    try {
-        let DB = fs.readFileSync(filePath, 'utf8');
-        DB = JSON.parse(DB);
+	req.on('end', ()=>{
+		let DB;
+		let id = req.params.id;
+		let newUser = {"id" : id};
 
-        for (let i = 0; i < DB.length; i++) {
-            if (Number(id) === Number(DB[i].id)) {
-                DB.splice(i, 1);
-                break;
-            }
-        }
-        fs.writeFile(filePath, JSON.stringify(DB, null, 2), 'utf8', (err) => {
-            if (err) {
-                console.error('Error writing to file:', err.message);
-                return res.status(500).send("Server Error");
-            } else {
-                console.log('Written successfully.');
-                res.redirect('/main');
-            }
-        });
-    } catch (error) {
-        console.error('Error reading file:', error.message);
-        return res.status(500).send("Server Error");
-    }
+		try {
+			DB = fs.readFileSync(filePath, 'utf8');
+			DB = JSON.parse(DB);
+			for(let i = 0; i < DB.length; i++){
+				if(Number(newUser.id) === Number(DB[i].id)){
+					DB.splice(i, 1);
+				}
+			}
+			DB = JSON.stringify(DB, null, 2);
+		} catch (error) {
+			console.error('Error reading file:', error.message);
+		}
+
+		fs.writeFile(filePath, DB, 'utf8', (err) => {
+			if (err) {
+				console.error('Error writing to file:', err.message);
+			} else {
+				console.log('Written successfully.');
+			}
+		});
+
+	})
+	res.writeHead(302, {
+		'Location': '/' 
+	});
+	res.end();
+});
+app.get('/', async function(req, res) {
+	fs.readFile('DB.json', 'utf8', (err, users) => {
+		if (err) {console.error(err);return;}
+		res.render("main", {users:JSON.parse(users), clickable:false});
+	});
 });
 
 
-
-app.listen(port, () => {
-  console.log(`Сервер запущен на порту ${port}`);
-});
+app.listen(3000, () => console.log(`Server running at http://localhost:${3000}/\n`));
