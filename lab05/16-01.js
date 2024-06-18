@@ -87,37 +87,3 @@ app.use((request, responce) => {
 
 app.listen(3000, () => console.log(`Server running at http://localhost:${3000}/login\n`));
 
-// const express = require("express");
-// const passport = require("passport");
-// const BasicStrategy = require("passport-http").BasicStrategy;
-// const fs = require("fs");
-// const users = JSON.parse(fs.readFileSync("user.json"));
-
-// const app = express();
-
-// app.set("view engine", "ejs");
-
-
-// passport.use(new BasicStrategy(
-//   function(username, password, done) {
-//     const user = users.find(user => user.username === username && user.password === password);
-//     if (user) {
-//       return done(null, user);
-//     } else {
-//       return done(null, false);
-//     }
-//   }
-// ));
-
-// const authenticate = passport.authenticate('basic', { session: false });
-
-
-
-// app.get("/login", function(request, response){   
-//     response.render('login');
-// });
-// app.post("/login", authenticate, function(request, response) {
-//   response.send("You are logged in as " + request.user.username);
-// });
-
-// app.listen(3000, () => console.log(`Server running at http://localhost:${3000}/\n`));
